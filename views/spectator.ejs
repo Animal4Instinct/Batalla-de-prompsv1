@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Espectador del Juego: <%= game._id %></title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        // Conectar a la sala del juego correspondiente
+        socket.emit('joinGame', '<%= game._id %>');
+
+        // Escuchar el evento 'promptUpdate'
+        socket.on('promptUpdate', (data) => { // Cambiado a 'promptUpdate'
+            const promptDiv = document.getElementById(`prompt-${data.player}`);
+            if (promptDiv) {
+                promptDiv.innerText = `Jugador ${data.player}: ${data.prompt}`;
+            }
+        });
+
+        // Escuchar el evento 'timeUpdate' del servidor
+        socket.on('timeUpdate', (data) => {
+            if (data.gameId === '<%= game._id %>') {
+                const timerElement = document.getElementById('time-remaining');
+                const timeLeft = data.timeLeft;
+
+                // Calcula el tiempo restante en minutos y segundos
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = Math.floor(timeLeft % 60);
+                timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+        });
+
+        // Escuchar el evento 'imageGenerated' del servidor
+        socket.on('imageGenerated', function (data) {
+            const imageDiv = document.getElementById('spectator-images');
+            const img = document.createElement('img');
+            img.src = data.imageUrl;
+            img.alt = 'Generated Image';
+            img.width = 300;
+            imageDiv.appendChild(img);
+        });
+    </script>
+    <link rel="stylesheet" href="/css/spectator.css">
+</head>
+
+<body>
+    <div class="game-container">
+        <h1>Juego ID: <%= game._id %></h1>
+        <% if (game.topic) { %>
+            <p>Tema: <%= game.topic.title %></p>
+        <% } else { %>
+            <p>No se asignó ningún tema</p>
+        <% } %>
+
+        <h3>Configuración del Juego:</h3>
+        <ul>
+            <li>Tiempo de juego: <%= game.gameTime %> minuto/s</li>
+            <li>Cantidad de imágenes: <%= game.imageCount %></li>
+            <li>Modo de votación: <%= game.votingMode === 'public' ? 'Público' : 'Admin' %></li>
+            <li>Estado del juego: <%= game.status %></li>
+            <li>Tiempo restante: <span id="time-remaining">Calculando...</span></li>
+        </ul>
+
+        <div class="players-container">
+            <div class="player-section">
+                <h2>Jugador 1: <%= game.player1 %></h2>
+                <div id="images-player1">
+                    <% game.images.forEach(image => { %>
+                        <% if (image.player === 'player1') { %>
+                            <div class="spectator-image">
+                                <img src="<%= image.imageUrl %>" alt="Generated Image" width="300">
+                            </div>
+                        <% } %>
+                    <% }) %>
+                </div>
+                <div id="prompt-player1">Jugador 1: Esperando prompt...</div>
+            </div>
+
+            <div class="player-section">
+                <h2>Jugador 2: <%= game.player2 %></h2>
+                <div id="images-player2">
+                    <% game.images.forEach(image => { %>
+                        <% if (image.player === 'player2') { %>
+                            <div class="spectator-image">
+                                <img src="<%= image.imageUrl %>" alt="Generated Image" width="300">
+                            </div>
+                        <% } %>
+                    <% }) %>
+                </div>
+                <div id="prompt-player2">Jugador 2: Esperando prompt...</div>
+            </div>
+        </div>
+
+        <div id="spectator-images"></div> <!-- Contenedor para imágenes generadas -->
+
+        <div id="select-winner-section" style="display: <%= (user && user.isAdmin && game.status === 'completed') ? 'block' : 'none' %>;">
+            <h3>Seleccionar Ganador</h3>
+            <form action="/game/<%= game._id %>/select-winner" method="POST">
+                <label for="winner">Selecciona al ganador:</label>
+                <select name="winner" id="winner">
+                    <option value="player1">Jugador 1</option>
+                    <option value="player2">Jugador 2</option>
+                </select>
+                <button type="submit">Seleccionar Ganador</button>
+            </form>
+        </div>
+
+        <div class="button-container">
+            <a href="/lobby" class="btn btn-primary">Volver al Lobby</a>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <img src="/images/logo.png" alt="Logo" class="footer-logo">
+            <p>&copy; <span id="year"></span> Batalla de Prompts. Desarrollado por <strong>Nicolás Rodríguez</strong>.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Actualiza el año en el footer automáticamente
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

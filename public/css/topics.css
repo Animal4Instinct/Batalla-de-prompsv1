@@ -1,0 +1,123 @@
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .topic-list {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+    }
+
+    .topic-list th,
+    .topic-list td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+    }
+
+    .topic-list th {
+        background-color: #4CAF50;
+        color: white;
+        font-weight: bold;
+    }
+
+    .topic-list tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .topic-list tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    .add-topic-form {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .add-topic-form form {
+        display: flex;
+        width: 100%;
+        max-width: 600px;
+        align-items: center;
+    }
+
+    .add-topic-form input[type="text"] {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-right: 10px;
+        font-size: 16px;
+    }
+
+    .add-topic-form button {
+        padding: 12px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .add-topic-form button:hover {
+        background-color: #45a049;
+    }
+
+    .back-button {
+        display: block;
+        margin: 20px auto;
+        padding: 12px 20px;
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .back-button:hover {
+        background-color: #0b7dda;
+    }
+
+    footer {
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        padding: 10px;
+    }
+
+    .footer-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .footer-logo {
+        max-width: 50px;
+        margin-bottom: 10px;
+    }

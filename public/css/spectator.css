@@ -1,0 +1,158 @@
+/* General Styles */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f0f2f5;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Container for game info */
+.game-info {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 100%;
+  max-width: 800px;
+}
+
+/* Container for players */
+.players-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  margin-top: 20px;
+}
+
+/* Player sections */
+.player-section {
+  width: 45%;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin: 0 auto;
+}
+
+/* Images container */
+.spectator-images {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.spectator-image {
+  margin-bottom: 20px;
+}
+
+.spectator-image img {
+  max-width: 100%;
+  max-height: 300px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+}
+
+/* Form Section */
+#select-winner-section {
+  margin-top: 30px;
+  text-align: center;
+}
+
+#select-winner-section form {
+  display: inline-block;
+}
+
+#select-winner-section button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+#select-winner-section button:hover {
+  background-color: #2980b9;
+}
+
+/* Button */
+.btn-primary {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+}
+
+/* Container for centering the button */
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .players-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .player-section {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .spectator-image img {
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-info {
+    padding: 15px;
+  }
+}
+
+/* Footer */
+footer {
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 10px;
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.footer-logo {
+  max-width: 50px;
+  margin-bottom: 10px;
+}

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Game: <%= game._id %>
+  </title>
+  <link rel="stylesheet" href="/css/game.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+  <div class="main-container">
+    <div class="game-container">
+      <h1>Game ID: <%= game._id %>
+      </h1>
+      <% if (game.topic) { %>
+        <p>Topic: <%= game.topic.title %>
+        </p>
+        <% } else { %>
+          <p>No topic assigned</p>
+          <% } %>
+
+            <h3>Configuración del Juego:</h3>
+            <div id="timer" style="display: none;">
+              Tiempo restante: <span id="time-remaining">
+                <%= timeLeft %>
+              </span> segundos
+            </div>
+
+            <ul>
+              <li>Tiempo de juego: <%= game.gameTime %> minuto/s</li>
+              <li>Cantidad de imágenes: <%= game.imageCount %>
+              </li>
+              <li>Modo de votación: <%= game.votingMode==='public' ? 'Público' : 'Admin' %>
+              </li>
+            </ul>
+
+            <div class="player-container">
+              <!-- Jugador 1 -->
+              <div class="player-section">
+                <h2>Jugador 1: <%= game.player1 %>
+                </h2>
+                <input type="text" id="input-player1" placeholder="Ingresa tu prompt">
+                <button id="generate-player1" onclick="generateImage('player1')">Generar</button>
+                <div id="loader-player1" class="loader" style="display: none;"></div>
+                <div id="images-player1">
+                  <% game.images.forEach(function(image) { %>
+                    <% if (image.player==='player1' ) { %>
+                      <img src="<%= image.imageUrl %>" alt="Imagen generada por Jugador 1" width="300">
+                      <% } %>
+                        <% }) %>
+                </div>
+              </div>
+
+              <!-- Jugador 2 -->
+              <div class="player-section">
+                <h2>Jugador 2: <%= game.player2 %>
+                </h2>
+                <input type="text" id="input-player2" placeholder="Ingresa tu prompt">
+                <button id="generate-player2" onclick="generateImage('player2')">Generar</button>
+                <div id="loader-player2" class="loader" style="display: none;"></div>
+                <div id="images-player2">
+                  <% game.images.forEach(function(image) { %>
+                    <% if (image.player==='player2' ) { %>
+                      <img src="<%= image.imageUrl %>" alt="Imagen generada por Jugador 2" width="300">
+                      <% } %>
+                        <% }) %>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección de votación -->
+            <div id="voting-section" class="voting-section" style="display: none;">
+              <h3>Vote for the Winner</h3>
+              <button onclick="vote('player1')">Votar por Jugador 1</button>
+              <button onclick="vote('player2')">Votar por Jugador 2</button>
+              <p>Votos actuales: Jugador 1 - <span id="player1-votes">
+                  <%= game.player1Votes || 0 %>
+                </span>, Jugador 2 - <span id="player2-votes">
+                  <%= game.player2Votes || 0 %>
+                </span></p>
+            </div>
+
+            <!-- Sección de selección de ganador para admin -->
+            <% if (user.isAdmin) { %>
+              <div id="select-winner-section" style="display: none;">
+                <h3>Seleccionar Ganador</h3>
+                <form action="/game/<%= game._id %>/select-winner" method="POST">
+                  <label for="winner">Seleccionar ganador:</label>
+                  <select name="winner" id="winner">
+                    <option value="player1">
+                      <%= game.player1 %>
+                    </option>
+                    <option value="player2">
+                      <%= game.player2 %>
+                    </option>
+                  </select>
+                  <button type="submit">Seleccionar Ganador</button>
+                </form>
+              </div>
+              <% } %>
+
+                <!-- Solo visible para administradores -->
+                <% if (user.isAdmin) { %>
+                  <div id="adminSection">
+                    <h2>Prompts en tiempo real</h2>
+                    <div id="prompts">
+                      <div id="prompt-player1">Jugador 1: Esperando prompt...</div>
+                      <div id="prompt-player2">Jugador 2: Esperando prompt...</div>
+                    </div>
+                  </div>
+                  <% } %>
+                    <!-- Botón para volver al lobby -->
+                    <a href="/lobby" class="btn-primary">Volver al Lobby</a>
+    </div>
+
+    <script>
+      const socket = io();
+      const gameId = '<%= game._id %>';
+      let player1ImageCount = <%= game.images.filter(img => img.player === 'player1').length %>;
+      let player2ImageCount = <%= game.images.filter(img => img.player === 'player2').length %>;
+      const maxImages = <%= game.imageCount %>;
+      let timeLeft = <%= timeLeft %>;
+      let timerInterval;
+
+      // Unirse a la sala del juego
+      socket.emit('joinGame', gameId);
+
+      // Escuchar actualizaciones de votos
+      socket.on('voteUpdate', (data) => {
+        document.getElementById('player1-votes').innerText = data.player1Votes || 0;
+        document.getElementById('player2-votes').innerText = data.player2Votes || 0;
+      });
+
+      // Escuchar la selección del ganador
+      socket.on('winnerSelected', (data) => {
+        alert(`El ganador es ${data.winner}`);
+        document.getElementById('voting-section').style.display = 'none';
+        document.getElementById('select-winner-section').style.display = 'none';
+      });
+
+      // Escuchar el inicio del juego
+      socket.on('gameStarted', function (data) {
+        if (data.gameId === gameId) {
+          const currentTime = new Date().getTime();
+          const gameEndTime = new Date(data.startTime).getTime() + data.gameTime * 60000;
+          timeLeft = Math.floor((gameEndTime - currentTime) / 1000);
+          startRealTimeTimer();
+        }
+      });
+
+      // Escuchar el fin del juego
+      socket.on('gameEnded', function (data) {
+        if (data.gameId === gameId) {
+          alert('El tiempo ha terminado');
+          handleTimerEnd();
+        }
+      });
+
+      // Escuchar el inicio de la votación
+      socket.on('votingStarted', () => {
+        document.getElementById('voting-section').style.display = 'block';
+        document.getElementById('select-winner-section').style.display = 'block';
+      });
+
+      // Actualizar prompt en tiempo real
+      socket.on('promptUpdate', ({ player, prompt }) => {
+        document.getElementById(`prompt-${player}`).innerText = `Jugador ${player.charAt(player.length - 1)}: ${prompt || 'Esperando prompt...'}`;
+      });
+
+      function vote(player) {
+        fetch(`/game/${gameId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ player })
+        })
+          .then(response => response.json())
+          .then(data => {
+            alert(data.message);
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Hubo un error al registrar tu voto. Por favor, intenta de nuevo.');
+          });
+      }
+
+      function updateTimer() {
+        const timerElement = document.getElementById('time-remaining');
+        if (timeLeft > 0) {
+          timeLeft--;
+          const minutes = Math.floor(timeLeft / 60);
+          const seconds = timeLeft % 60;
+          timerElement.innerText = `${minutes} minutos ${seconds} segundos`;
+        } else {
+          clearInterval(timerInterval);
+          handleTimerEnd();
+        }
+      }
+
+      function startRealTimeTimer() {
+        document.getElementById('timer').style.display = 'block';
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+
+      function handleTimerEnd() {
+        const votingMode = '<%= game.votingMode %>';
+        if (votingMode === 'admin') {
+          document.getElementById('select-winner-section').style.display = 'block';
+        } else {
+          document.getElementById('voting-section').style.display = 'block';
+        }
+        socket.emit('votingStarted');
+      }
+
+      function generateImage(player) {
+        if ((player === 'player1' && player1ImageCount >= maxImages) || (player === 'player2' && player2ImageCount >= maxImages)) {
+          alert('Has alcanzado el límite de imágenes.');
+          return;
+        }
+
+        const prompt = document.getElementById(`input-${player}`).value;
+        if (!prompt) {
+          alert('Por favor ingresa un prompt.');
+          return;
+        }
+
+        // Mostrar el loader
+        document.getElementById(`loader-${player}`).style.display = 'block';
+
+        fetch(`/game/<%= game._id %>/generate-image`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ player, prompt })
+        })
+          .then(response => response.json())
+          .then(data => {
+            socket.emit('imageGenerated', { player, imageUrl: data.imageUrl });
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Hubo un error al generar la imagen. Por favor, intenta de nuevo.');
+          })
+          .finally(() => {
+            // Ocultar el loader
+            document.getElementById(`loader-${player}`).style.display = 'none';
+          });
+      }
+
+      socket.on('imageGenerated', function (data) {
+        const imageDiv = document.getElementById(`images-${data.player}`);
+        const img = document.createElement('img');
+        img.src = data.imageUrl;
+        img.alt = 'Generated Image';
+        img.width = 300;
+        imageDiv.appendChild(img);
+
+        if (data.player === 'player1') {
+          player1ImageCount++;
+          if (player1ImageCount >= maxImages) {
+            document.getElementById('generate-player1').disabled = true;
+          }
+        } else if (data.player === 'player2') {
+          player2ImageCount++;
+          if (player2ImageCount >= maxImages) {
+            document.getElementById('generate-player2').disabled = true;
+          }
+        }
+      });
+
+      if ('<%= game.status %>' === 'in-progress') {
+        startRealTimeTimer();
+      }
+
+      function onPromptInput(player) {
+        const prompt = document.getElementById(`input-${player}`).value;
+        socket.emit('promptUpdate', { gameId, player, prompt }); // Asegúrate de incluir gameId
+      }
+
+
+      document.getElementById('input-player1').addEventListener('input', () => onPromptInput('player1'));
+      document.getElementById('input-player2').addEventListener('input', () => onPromptInput('player2'));
+    </script>
+
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <img src="/images/logo.png" alt="Logo" class="footer-logo">
+      <p>&copy; <span id="year"></span> Batalla de Prompts. Desarrollado por <strong>Nicolás Rodríguez</strong>.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>

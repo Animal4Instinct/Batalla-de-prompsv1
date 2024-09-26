@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temas</title>
+  <link rel="stylesheet" href="/css/topics.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Lista de Temas</h1>
+
+    <!-- Tabla de temas -->
+    <table class="topic-list">
+      <thead>
+        <tr>
+          <th>Tema</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% topics.forEach(topic=> { %>
+          <tr>
+            <td>
+              <%= topic.title %>
+            </td>
+          </tr>
+          <% }) %>
+      </tbody>
+    </table>
+
+    <!-- Formulario para añadir un nuevo tema -->
+    <div class="add-topic-form">
+      <form action="/topics/add" method="POST">
+        <input type="text" name="title" placeholder="Introduce un tema" required aria-label="Introducir tema">
+        <button type="submit">Añadir Tema</button>
+      </form>
+    </div>
+
+    <!-- Botón para volver al lobby -->
+    <a href="/lobby" class="back-button">Volver al Lobby</a>
+  </div>
+  <footer>
+    <div class="footer-content">
+      <img src="/images/logo.png" alt="Logo" class="footer-logo">
+      <p>&copy; <span id="year"></span> Batalla de Promps. Desarrollado por <strong>Nicolás Rodríguez</strong>.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Actualiza el año en el footer automáticamente
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>

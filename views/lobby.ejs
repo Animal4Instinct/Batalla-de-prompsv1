@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Lobby</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <!-- Mensaje de bienvenida -->
+    <% if (user && user.name) { %>
+      <h1>Bienvenido, <%= user.name %>!</h1>
+      <% } %>
+
+        <!-- Mostrar juegos en espera -->
+        <h2>Juegos en espera</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ID del Juego</th>
+              <th>Jugador 1</th>
+              <th>Jugador 2</th>
+              <th>Tema</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% games.forEach(game=> { %>
+              <tr>
+                <td>
+                  <%= game._id %>
+                </td>
+                <td>
+                  <%= game.player1 %>
+                </td>
+                <td>
+                  <%= game.player2 || 'Esperando' %>
+                </td>
+                <td>
+                  <%= game.topic.title %>
+                </td>
+                <td>
+                  <% if (game.status==='waiting' ) { %>
+                    Esperando
+                    <% } else if (game.status==='in-progress' ) { %>
+                      En progreso
+                      <% } else if (game.status==='completed' ) { %>
+                        Completado
+                        <% } else { %>
+                          Estado desconocido
+                          <% } %>
+                </td>
+                <td>
+                  <% if (user.isAdmin) { %>
+                    <% if (game.status==='waiting' ) { %>
+                      <form action="/lobby/<%= game._id %>/start-game" method="POST">
+                        <button type="submit">Iniciar Partida</button>
+                      </form>
+                      <% } %>
+                        <form action="/game/<%= game._id %>" method="GET">
+                          <button type="submit">Ir al Juego</button>
+                        </form>
+                        <% } else { %>
+                          <% if (!game.player2) { %>
+                            <form action="/lobby/join-game" method="POST">
+                              <input type="hidden" name="gameId" value="<%= game._id %>">
+                              <label for="playerNick">Tu Nick:</label>
+                              <input type="text" name="playerNick" id="playerNick" required>
+                              <button type="submit">Unirse a la partida</button>
+                            </form>
+                            <% } %>
+                              <form action="/lobby/watch-game" method="GET">
+                                <input type="hidden" name="gameId" value="<%= game._id %>">
+                                <button type="submit">Ver como espectador</button>
+                              </form>
+                              <% } %>
+                </td>
+              </tr>
+              <% }); %>
+          </tbody>
+        </table>
+
+
+        <!-- Crear nueva partida -->
+        <h2>Crear nueva partida</h2>
+        <form action="/lobby/new-game" method="POST">
+          <label for="gameTime">Tiempo de juego (máximo 3 minutos):</label>
+          <input type="number" name="gameTime" id="gameTime" min="1" max="3" required>
+
+          <label for="imageCount">Cantidad de imágenes (máximo 3):</label>
+          <input type="number" name="imageCount" id="imageCount" min="1" max="3" required>
+
+          <label for="votingMode">Modo de votación:</label>
+          <select name="votingMode" id="votingMode">
+            <option value="public">Público</option>
+            <option value="admin">Admin</option>
+          </select>
+
+          <label for="playerNick">Tu Nick:</label>
+          <input type="text" name="playerNick" id="playerNick" required>
+
+          <button type="submit">Crear juego</button>
+        </form>
+
+        <!-- Botón para ir a la página de temas -->
+        <br>
+        <a href="/topics" class="button">Ver Temas</a>
+
+        <!-- Mostrar botón de logout -->
+        <a href="/auth/logout">Cerrar sesión</a>
+  </div>
+  <footer>
+    <div class="footer-content">
+      <img src="/images/logo.png" alt="Logo" class="footer-logo">
+      <p>&copy; <span id="year"></span> Batalla de Promps. Desarrollado por <strong>Nicolás Rodríguez</strong>.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Actualiza el año en el footer automáticamente
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+  <script>
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', () => {
+        form.querySelector('button').disabled = true;
+      });
+    });
+  </script>
+</body>
+
+</html>

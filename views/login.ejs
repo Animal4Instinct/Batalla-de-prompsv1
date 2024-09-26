@@ -1,0 +1,50 @@
+<!-- views/login.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="/css/login.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Login</h1>
+
+    <!-- Mostrar mensajes de error si existen -->
+    <% if (errorMessage) { %>
+      <p class="error-message">
+        <%= errorMessage %>
+      </p>
+      <% } %>
+
+        <form action="/auth/login" method="POST">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required autofocus>
+
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+
+          <input type="submit" value="Login">
+        </form>
+
+        <div class="register-link">
+          <p>¿No tienes una cuenta? <a href="/auth/register">Regístrate aquí</a></p>
+        </div>
+  </div>
+  <footer>
+    <div class="footer-content">
+      <img src="/images/logo.png" alt="Logo" class="footer-logo">
+      <p>&copy; <span id="year"></span> Batalla de Promps. Desarrollado por <strong>Nicolás Rodríguez</strong>.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Actualiza el año en el footer automáticamente
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>

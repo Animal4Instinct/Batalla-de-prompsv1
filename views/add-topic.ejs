@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir Tema</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <h1>Añadir un Nuevo Tema</h1>
+    <div>
+        <form action="/topics/add" method="POST">
+            <label for="title">Título del Tema:</label>
+            <input type="text" id="title" name="title" placeholder="Introduce un tema" required>
+            <button type="submit">Añadir Tema</button>
+        </form>
+    </div>
+    <a href="/lobby">Volver al Lobby</a>
+    <footer>
+        <div class="footer-content">
+            <img src="/images/logo.png" alt="Logo" class="footer-logo">
+            <p>&copy; <span id="year"></span> Batalla de Promps. Desarrollado por <strong>Nicolás Rodríguez</strong>.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Actualiza el año en el footer automáticamente
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>
