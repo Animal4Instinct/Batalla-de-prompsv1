@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const flash = require('connect-flash');
+const Game = require('../Batalla de promps/models/Game'); // Ajusta la ruta según la ubicación de tu archivo Game.js
 const mongoose = require('mongoose');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -121,12 +122,6 @@ const startTimer = (gameId, gameTime) => {
 io.on('connection', (socket) => {
   console.log('A user connected');
 
-  socket.on('promptUpdate', ({ gameId, player, prompt }) => {
-    // Emitir la actualización del prompt a todos los usuarios en la sala del juego
-    io.to(gameId).emit('promptUpdate', { player, prompt }); // Cambia a 'promptUpdate'
-  });
-
-
   socket.on('joinGame', (gameId) => {
     socket.join(gameId);
     console.log(`Client joined game ${gameId}`);
@@ -136,18 +131,54 @@ io.on('connection', (socket) => {
     startTimer(gameId, gameTime);
   });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
+  socket.on('promptUpdate', ({ gameId, player, prompt }) => {
+    // Emitir la actualización del prompt a todos los usuarios en la sala del juego
+    io.to(gameId).emit('promptUpdate', { player, prompt });
   });
 
-  socket.on('startVoting', (gameId) => {
-    io.to(gameId).emit('votingStarted');
+  socket.on('vote', async ({ gameId, player }) => {
+    // Aquí debes implementar la lógica para manejar los votos
+    const game = await Game.findById(gameId);
+
+    if (!game.isGameActive) {
+      socket.emit('voteError', { message: 'El tiempo de votación ha terminado.' });
+      return;
+    }
+
+    if (player === 'player1') {
+      game.player1Votes = (game.player1Votes || 0) + 1;
+    } else if (player === 'player2') {
+      game.player2Votes = (game.player2Votes || 0) + 1;
+    }
+
+    await game.save();
+    io.to(gameId).emit('voteUpdate', { player1Votes: game.player1Votes, player2Votes: game.player2Votes });
   });
+
+  socket.on('startVoting', async (data) => {
+    const { gameId } = data; // Asegúrate de que data tenga gameId
+    if (!gameId) {
+      console.error('No se proporcionó gameId');
+      return; // Detenemos la ejecución si no hay gameId
+    }
+
+    const game = await Game.findById(gameId);
+
+    // Establecer el tiempo de finalización de la votación en 4 minutos
+    game.votingEndTime = new Date(Date.now() + 4 * 60000); // 4 minutos
+    await game.save();
+
+    io.to(gameId).emit('votingStarted'); // Emite a todos los clientes que la votación ha comenzado
+  });
+
 
   socket.on('selectWinner', ({ gameId, winner }) => {
     io.to(gameId).emit('winnerSelected', { winner });
   });
 
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
 });
 
 // Iniciar el servidor

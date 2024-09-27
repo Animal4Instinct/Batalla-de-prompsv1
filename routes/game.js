@@ -5,6 +5,8 @@ const ensureAdmin = require('../middleware/ensureAdmin');
 const ensureAuthenticated = require('../middleware/authMiddleware');
 const fetch = require('node-fetch');
 const mongoose = require('mongoose');
+const axios = require('axios'); // Puedes usar axios en lugar de fetch
+
 
 // Mostrar la página del juego
 router.get('/:id', ensureAuthenticated, async (req, res) => {
@@ -32,9 +34,6 @@ router.get('/:id', ensureAuthenticated, async (req, res) => {
     res.status(500).send('Error en el servidor');
   }
 });
-
-
-const axios = require('axios'); // Puedes usar axios en lugar de fetch
 
 
 // Ruta para generar imágenes
@@ -120,33 +119,6 @@ router.post('/:id/select-winner', ensureAuthenticated, ensureAdmin, async (req, 
   }
 });
 
-// Manejar el fin del juego y comenzar la votación pública
-router.post('/:id/end-game', ensureAuthenticated, async (req, res) => {
-  const gameId = req.params.id;
-  try {
-    const game = await Game.findById(gameId);
-    if (!game) {
-      return res.status(404).send('Juego no encontrado');
-    }
-
-    if (game.status !== 'in-progress') {
-      return res.status(400).send('El juego no está en progreso.');
-    }
-
-    // Cambiar el estado a 'voting' e iniciar el temporizador
-    game.status = 'voting';
-    game.votingEndTime = Date.now() + 60000; // 1 minuto en milisegundos
-    await game.save();
-
-    // Emitir el evento para comenzar la votación pública
-    req.app.get('io').to(gameId).emit('votingStarted');
-
-    res.json({ message: 'Votación pública iniciada', votingEndTime: game.votingEndTime });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Error al terminar el juego');
-  }
-});
 
 // Manejar votación pública
 router.post('/:id/vote', ensureAuthenticated, async (req, res) => {
@@ -157,18 +129,17 @@ router.post('/:id/vote', ensureAuthenticated, async (req, res) => {
   try {
     const game = await Game.findById(gameId);
 
-    if (!game || game.status !== 'voting') {
-      return res.status(400).json({ message: 'La votación no está disponible en este momento.' });
-    }
-
+    // Comprobar si el usuario ya ha votado
     if (game.voters.includes(userIp)) {
       return res.status(400).json({ message: 'Ya has votado.' });
     }
 
+    // Comprobar si el tiempo de votación ha terminado
     if (Date.now() > game.votingEndTime) {
       return res.status(400).json({ message: 'El tiempo de votación ha terminado.' });
     }
 
+    // Registrar el voto
     if (player === 'player1') {
       game.player1Votes = (game.player1Votes || 0) + 1;
     } else if (player === 'player2') {
@@ -188,6 +159,8 @@ router.post('/:id/vote', ensureAuthenticated, async (req, res) => {
   }
 });
 
+
+
 // Mostrar el resultado de la votación pública
 router.get('/:id/result', ensureAuthenticated, async (req, res) => {
   try {
@@ -196,17 +169,13 @@ router.get('/:id/result', ensureAuthenticated, async (req, res) => {
       return res.status(404).send('Juego no encontrado');
     }
 
-    if (game.status !== 'voting') {
-      return res.status(400).send('La votación no está activa.');
-    }
-
     // Verificar si la votación ha terminado
     if (Date.now() <= game.votingEndTime) {
       return res.status(400).send('La votación aún está en curso.');
     }
 
+    // Determinar el ganador
     const winner = game.player1Votes > game.player2Votes ? 'player1' : 'player2';
-
     game.winner = winner;
     game.status = 'completed';
     await game.save();
@@ -220,6 +189,7 @@ router.get('/:id/result', ensureAuthenticated, async (req, res) => {
     res.status(500).send('Error al mostrar el resultado');
   }
 });
+
 
 
 // Función para emitir el tiempo restante a los clientes
@@ -265,11 +235,7 @@ router.post('/:id/start', ensureAuthenticated, ensureAdmin, async (req, res) => 
 
       if (timeLeft <= 0) {
         clearInterval(intervalId);
-
-        // Cambiar el estado a 'voting'
-        game.status = 'voting';
-        await game.save();
-
+        
         // Emitir un evento para indicar que la partida ha terminado
         req.app.get('io').to(gameId).emit('gameEnded', { gameId: game._id });
 
@@ -284,7 +250,6 @@ router.post('/:id/start', ensureAuthenticated, ensureAdmin, async (req, res) => 
     res.status(500).send('Error al iniciar la partida');
   }
 });
-
 
 
 // Mostrar la partida como espectador

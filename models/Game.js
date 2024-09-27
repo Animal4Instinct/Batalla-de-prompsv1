@@ -53,7 +53,21 @@ const GameSchema = new mongoose.Schema({
     default: null,
   },
   voters: [String], // Para almacenar IPs de votantes si es necesario
-  spectators: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  spectators: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  
+  // Nuevos campos añadidos
+  player1Votes: {
+    type: Number,
+    default: 0, // Contador de votos para el jugador 1
+  },
+  player2Votes: {
+    type: Number,
+    default: 0, // Contador de votos para el jugador 2
+  },
+  isGameActive: {
+    type: Boolean,
+    default: true, // Indica si el juego está activo
+  },
 });
 
 const Game = mongoose.model('Game', GameSchema);

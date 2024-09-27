@@ -101,7 +101,6 @@
               </div>
               <% } %>
 
-                <!-- Solo visible para administradores -->
                 <% if (user.isAdmin) { %>
                   <div id="adminSection">
                     <h2>Prompts en tiempo real</h2>
@@ -111,7 +110,6 @@
                     </div>
                   </div>
                   <% } %>
-                    <!-- Botón para volver al lobby -->
                     <a href="/lobby" class="btn-primary">Volver al Lobby</a>
     </div>
 
@@ -158,12 +156,6 @@
         }
       });
 
-      // Escuchar el inicio de la votación
-      socket.on('votingStarted', () => {
-        document.getElementById('voting-section').style.display = 'block';
-        document.getElementById('select-winner-section').style.display = 'block';
-      });
-
       // Actualizar prompt en tiempo real
       socket.on('promptUpdate', ({ player, prompt }) => {
         document.getElementById(`prompt-${player}`).innerText = `Jugador ${player.charAt(player.length - 1)}: ${prompt || 'Esperando prompt...'}`;
@@ -182,7 +174,6 @@
             alert(data.message);
           })
           .catch(error => {
-            console.error('Error:', error);
             alert('Hubo un error al registrar tu voto. Por favor, intenta de nuevo.');
           });
       }
@@ -207,14 +198,17 @@
       }
 
       function handleTimerEnd() {
-        const votingMode = '<%= game.votingMode %>';
-        if (votingMode === 'admin') {
-          document.getElementById('select-winner-section').style.display = 'block';
-        } else {
-          document.getElementById('voting-section').style.display = 'block';
-        }
-        socket.emit('votingStarted');
-      }
+    // Permitir votar solo al finalizar el tiempo
+    document.getElementById('voting-section').style.display = 'block';
+    
+    // Asegúrate de que gameId esté definido
+    if (gameId) {
+        socket.emit('startVoting', { gameId }); // Notificar al servidor que la votación ha comenzado
+    } else {
+        console.error('gameId no está definido.');
+    }
+}
+
 
       function generateImage(player) {
         if ((player === 'player1' && player1ImageCount >= maxImages) || (player === 'player2' && player2ImageCount >= maxImages)) {
@@ -231,72 +225,38 @@
         // Mostrar el loader
         document.getElementById(`loader-${player}`).style.display = 'block';
 
-        fetch(`/game/<%= game._id %>/generate-image`, {
+        fetch(`/game/${gameId}/generate-image`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({ player, prompt })
         })
           .then(response => response.json())
           .then(data => {
-            socket.emit('imageGenerated', { player, imageUrl: data.imageUrl });
+            // Agregar la imagen generada al contenedor correspondiente
+            const imageUrl = data.imageUrl;
+            const imagesContainer = document.getElementById(`images-${player}`);
+            const imgElement = document.createElement('img');
+            imgElement.src = imageUrl;
+            imgElement.width = 300;
+            imagesContainer.appendChild(imgElement);
+            // Incrementar el contador de imágenes
+            if (player === 'player1') {
+              player1ImageCount++;
+            } else {
+              player2ImageCount++;
+            }
+            // Ocultar el loader
+            document.getElementById(`loader-${player}`).style.display = 'none';
           })
           .catch(error => {
-            console.error('Error:', error);
             alert('Hubo un error al generar la imagen. Por favor, intenta de nuevo.');
-          })
-          .finally(() => {
-            // Ocultar el loader
             document.getElementById(`loader-${player}`).style.display = 'none';
           });
       }
-
-      socket.on('imageGenerated', function (data) {
-        const imageDiv = document.getElementById(`images-${data.player}`);
-        const img = document.createElement('img');
-        img.src = data.imageUrl;
-        img.alt = 'Generated Image';
-        img.width = 300;
-        imageDiv.appendChild(img);
-
-        if (data.player === 'player1') {
-          player1ImageCount++;
-          if (player1ImageCount >= maxImages) {
-            document.getElementById('generate-player1').disabled = true;
-          }
-        } else if (data.player === 'player2') {
-          player2ImageCount++;
-          if (player2ImageCount >= maxImages) {
-            document.getElementById('generate-player2').disabled = true;
-          }
-        }
-      });
-
-      if ('<%= game.status %>' === 'in-progress') {
-        startRealTimeTimer();
-      }
-
-      function onPromptInput(player) {
-        const prompt = document.getElementById(`input-${player}`).value;
-        socket.emit('promptUpdate', { gameId, player, prompt }); // Asegúrate de incluir gameId
-      }
-
-
-      document.getElementById('input-player1').addEventListener('input', () => onPromptInput('player1'));
-      document.getElementById('input-player2').addEventListener('input', () => onPromptInput('player2'));
     </script>
-
   </div>
-
-  <footer>
-    <div class="footer-content">
-      <img src="/images/logo.png" alt="Logo" class="footer-logo">
-      <p>&copy; <span id="year"></span> Batalla de Prompts. Desarrollado por <strong>Nicolás Rodríguez</strong>.</p>
-    </div>
-  </footer>
-
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
 </body>
 
 </html>
