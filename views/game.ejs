@@ -3,8 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Game: <%= game._id %>
-  </title>
+  <title>Game: <%= game._id %></title>
   <link rel="stylesheet" href="/css/game.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -12,105 +11,89 @@
 <body>
   <div class="main-container">
     <div class="game-container">
-      <h1>Game ID: <%= game._id %>
-      </h1>
+      <h1>Game ID: <%= game._id %></h1>
       <% if (game.topic) { %>
-        <p>Topic: <%= game.topic.title %>
-        </p>
-        <% } else { %>
-          <p>No topic assigned</p>
-          <% } %>
+        <p>Topic: <%= game.topic.title %></p>
+      <% } else { %>
+        <p>No topic assigned</p>
+      <% } %>
 
-            <h3>Configuración del Juego:</h3>
-            <div id="timer" style="display: none;">
-              Tiempo restante: <span id="time-remaining">
-                <%= timeLeft %>
-              </span> segundos
-            </div>
+      <h3>Configuración del Juego:</h3>
+      <div id="timer" style="display: none;">
+        Tiempo restante: <span id="time-remaining"><%= timeLeft %></span> segundos
+      </div>
 
-            <ul>
-              <li>Tiempo de juego: <%= game.gameTime %> minuto/s</li>
-              <li>Cantidad de imágenes: <%= game.imageCount %>
-              </li>
-              <li>Modo de votación: <%= game.votingMode==='public' ? 'Público' : 'Admin' %>
-              </li>
-            </ul>
+      <ul>
+        <li>Tiempo de juego: <%= game.gameTime %> minuto/s</li>
+        <li>Cantidad de imágenes: <%= game.imageCount %></li>
+        <li>Modo de votación: <%= game.votingMode==='public' ? 'Público' : 'Admin' %></li>
+      </ul>
 
-            <div class="player-container">
-              <!-- Jugador 1 -->
-              <div class="player-section">
-                <h2>Jugador 1: <%= game.player1 %>
-                </h2>
-                <input type="text" id="input-player1" placeholder="Ingresa tu prompt">
-                <button id="generate-player1" onclick="generateImage('player1')">Generar</button>
-                <div id="loader-player1" class="loader" style="display: none;"></div>
-                <div id="images-player1">
-                  <% game.images.forEach(function(image) { %>
-                    <% if (image.player==='player1' ) { %>
-                      <img src="<%= image.imageUrl %>" alt="Imagen generada por Jugador 1" width="300">
-                      <% } %>
-                        <% }) %>
-                </div>
-              </div>
-
-              <!-- Jugador 2 -->
-              <div class="player-section">
-                <h2>Jugador 2: <%= game.player2 %>
-                </h2>
-                <input type="text" id="input-player2" placeholder="Ingresa tu prompt">
-                <button id="generate-player2" onclick="generateImage('player2')">Generar</button>
-                <div id="loader-player2" class="loader" style="display: none;"></div>
-                <div id="images-player2">
-                  <% game.images.forEach(function(image) { %>
-                    <% if (image.player==='player2' ) { %>
-                      <img src="<%= image.imageUrl %>" alt="Imagen generada por Jugador 2" width="300">
-                      <% } %>
-                        <% }) %>
-                </div>
-              </div>
-            </div>
-
-            <!-- Sección de votación -->
-            <div id="voting-section" class="voting-section" style="display: none;">
-              <h3>Vote for the Winner</h3>
-              <button onclick="vote('player1')">Votar por Jugador 1</button>
-              <button onclick="vote('player2')">Votar por Jugador 2</button>
-              <p>Votos actuales: Jugador 1 - <span id="player1-votes">
-                  <%= game.player1Votes || 0 %>
-                </span>, Jugador 2 - <span id="player2-votes">
-                  <%= game.player2Votes || 0 %>
-                </span></p>
-            </div>
-
-            <!-- Sección de selección de ganador para admin -->
-            <% if (user.isAdmin) { %>
-              <div id="select-winner-section" style="display: none;">
-                <h3>Seleccionar Ganador</h3>
-                <form action="/game/<%= game._id %>/select-winner" method="POST">
-                  <label for="winner">Seleccionar ganador:</label>
-                  <select name="winner" id="winner">
-                    <option value="player1">
-                      <%= game.player1 %>
-                    </option>
-                    <option value="player2">
-                      <%= game.player2 %>
-                    </option>
-                  </select>
-                  <button type="submit">Seleccionar Ganador</button>
-                </form>
-              </div>
+      <div class="player-container">
+        <!-- Jugador 1 -->
+        <div class="player-section">
+          <h2>Jugador 1: <%= game.player1 %></h2>
+          <input type="text" id="input-player1" placeholder="Ingresa tu prompt">
+          <button id="generate-player1" onclick="generateImage('player1')">Generar</button>
+          <div id="loader-player1" class="loader" style="display: none;"></div>
+          <div id="images-player1">
+            <% game.images.forEach(function(image) { %>
+              <% if (image.player==='player1' ) { %>
+                <img src="<%= image.imageUrl %>" alt="Imagen generada por Jugador 1" width="300">
               <% } %>
+            <% }) %>
+          </div>
+        </div>
 
-                <% if (user.isAdmin) { %>
-                  <div id="adminSection">
-                    <h2>Prompts en tiempo real</h2>
-                    <div id="prompts">
-                      <div id="prompt-player1">Jugador 1: Esperando prompt...</div>
-                      <div id="prompt-player2">Jugador 2: Esperando prompt...</div>
-                    </div>
-                  </div>
-                  <% } %>
-                    <a href="/lobby" class="btn-primary">Volver al Lobby</a>
+        <!-- Jugador 2 -->
+        <div class="player-section">
+          <h2>Jugador 2: <%= game.player2 %></h2>
+          <input type="text" id="input-player2" placeholder="Ingresa tu prompt">
+          <button id="generate-player2" onclick="generateImage('player2')">Generar</button>
+          <div id="loader-player2" class="loader" style="display: none;"></div>
+          <div id="images-player2">
+            <% game.images.forEach(function(image) { %>
+              <% if (image.player==='player2' ) { %>
+                <img src="<%= image.imageUrl %>" alt="Imagen generada por Jugador 2" width="300">
+              <% } %>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de votación -->
+      <div id="voting-section" class="voting-section" style="display: none;">
+        <h3>Vote for the Winner</h3>
+        <button onclick="vote('player1')">Votar por Jugador 1</button>
+        <button onclick="vote('player2')">Votar por Jugador 2</button>
+        <p>Votos actuales: Jugador 1 - <span id="player1-votes"><%= game.player1Votes || 0 %></span>, Jugador 2 - <span id="player2-votes"><%= game.player2Votes || 0 %></span></p>
+      </div>
+
+      <!-- Sección de selección de ganador para admin -->
+      <% if (user.isAdmin) { %>
+        <div id="select-winner-section" style="display: none;">
+          <h3>Seleccionar Ganador</h3>
+          <form action="/game/<%= game._id %>/select-winner" method="POST">
+            <label for="winner">Seleccionar ganador:</label>
+            <select name="winner" id="winner">
+              <option value="player1"><%= game.player1 %></option>
+              <option value="player2"><%= game.player2 %></option>
+            </select>
+            <button type="submit">Seleccionar Ganador</button>
+          </form>
+        </div>
+      <% } %>
+
+      <% if (user.isAdmin) { %>
+        <div id="adminSection">
+          <h2>Prompts en tiempo real</h2>
+          <div id="prompts">
+            <div id="prompt-player1">Jugador 1: Esperando prompt...</div>
+            <div id="prompt-player2">Jugador 2: Esperando prompt...</div>
+          </div>
+        </div>
+      <% } %>
+      <a href="/lobby" class="btn-primary">Volver al Lobby</a>
     </div>
 
     <script>
@@ -161,6 +144,17 @@
         document.getElementById(`prompt-${player}`).innerText = `Jugador ${player.charAt(player.length - 1)}: ${prompt || 'Esperando prompt...'}`;
       });
 
+      // Emitir el prompt cuando se escribe
+      document.getElementById('input-player1').addEventListener('input', function() {
+        const prompt = this.value;
+        socket.emit('promptUpdate', { gameId, player: 'player1', prompt });
+      });
+
+      document.getElementById('input-player2').addEventListener('input', function() {
+        const prompt = this.value;
+        socket.emit('promptUpdate', { gameId, player: 'player2', prompt });
+      });
+
       function vote(player) {
         fetch(`/game/${gameId}/vote`, {
           method: 'POST',
@@ -198,17 +192,16 @@
       }
 
       function handleTimerEnd() {
-    // Permitir votar solo al finalizar el tiempo
-    document.getElementById('voting-section').style.display = 'block';
-    
-    // Asegúrate de que gameId esté definido
-    if (gameId) {
-        socket.emit('startVoting', { gameId }); // Notificar al servidor que la votación ha comenzado
-    } else {
-        console.error('gameId no está definido.');
-    }
-}
-
+        // Permitir votar solo al finalizar el tiempo
+        document.getElementById('voting-section').style.display = 'block';
+        
+        // Asegúrate de que gameId esté definido
+        if (gameId) {
+          socket.emit('startVoting', { gameId }); // Notificar al servidor que la votación ha comenzado
+        } else {
+          console.error('gameId no está definido.');
+        }
+      }
 
       function generateImage(player) {
         if ((player === 'player1' && player1ImageCount >= maxImages) || (player === 'player2' && player2ImageCount >= maxImages)) {

@@ -12,7 +12,7 @@
         socket.emit('joinGame', '<%= game._id %>');
 
         // Escuchar el evento 'promptUpdate'
-        socket.on('promptUpdate', (data) => { // Cambiado a 'promptUpdate'
+        socket.on('promptUpdate', (data) => {
             const promptDiv = document.getElementById(`prompt-${data.player}`);
             if (promptDiv) {
                 promptDiv.innerText = `Jugador ${data.player}: ${data.prompt}`;
@@ -41,6 +41,11 @@
             img.width = 300;
             imageDiv.appendChild(img);
         });
+
+        // Función para votar
+        function vote(player) {
+            socket.emit('vote', { gameId: '<%= game._id %>', player }); // Emitir el voto al servidor
+        }
     </script>
     <link rel="stylesheet" href="/css/spectator.css">
 </head>
@@ -94,6 +99,14 @@
         </div>
 
         <div id="spectator-images"></div> <!-- Contenedor para imágenes generadas -->
+
+        <!-- Sección de votación para espectadores -->
+        <div id="voting-section" style="display: block;">
+            <h3>Vota por el Ganador</h3>
+            <button onclick="vote('player1')">Votar por Jugador 1</button>
+            <button onclick="vote('player2')">Votar por Jugador 2</button>
+            <p>Votos actuales: Jugador 1 - <span id="player1-votes"><%= game.player1Votes || 0 %></span>, Jugador 2 - <span id="player2-votes"><%= game.player2Votes || 0 %></span></p>
+        </div>
 
         <div id="select-winner-section" style="display: <%= (user && user.isAdmin && game.status === 'completed') ? 'block' : 'none' %>;">
             <h3>Seleccionar Ganador</h3>
